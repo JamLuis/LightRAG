@@ -211,6 +211,8 @@ make env-security-check # 可选：审计当前 .env 中的安全风险
 
 设置向导工具的详细说明请参阅 [docs/InteractiveSetup.md](./docs/InteractiveSetup.md)。
 
+如果你想直接照着一步一步完成 Windows 下的 Docker 实操部署，可参考 [docs/DockerDeployment-zh.md](./docs/DockerDeployment-zh.md)。
+
 ## 关于LightRAG
 
 ### 基于图的轻量级RAG框架
