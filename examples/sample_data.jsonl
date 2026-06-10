@@ -1,0 +1,8 @@
+{"text": "Machine learning is a subset of artificial intelligence that enables computer systems to learn and improve from experience without being explicitly programmed."}
+{"text": "Deep learning utilizes artificial neural networks with multiple layers to process data and make predictions based on learned representations."}
+{"text": "Natural language processing is a branch of AI that focuses on enabling computers to understand, interpret, and generate human language."}
+{"text": "The transformer architecture has revolutionized the field of machine learning by introducing the self-attention mechanism for parallel processing."}
+{"content": "Supervised learning requires labeled training data where both input features and target outputs are provided to train the model."}
+{"content": "Unsupervised learning discovers hidden patterns in unlabeled data without explicit target variables to guide the learning process."}
+{"data": "Reinforcement learning enables agents to learn optimal behaviors through interaction with an environment and reward signals."}
+{"message": "Transfer learning leverages pre-trained models to accelerate learning on new tasks with limited labeled data."}

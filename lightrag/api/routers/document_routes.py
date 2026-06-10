@@ -985,6 +985,7 @@ class DocumentManager:
             ".htm",  # HyperText Markup Language
             ".csv",  # Comma-Separated Values
             ".json",  # JavaScript Object Notation
+            ".jsonl",  # JSON Lines format
             ".xml",  # eXtensible Markup Language
             ".yaml",  # YAML Ain't Markup Language
             ".yml",  # YAML
@@ -1685,6 +1686,65 @@ def _extract_pptx(file_bytes: bytes) -> str:
     return content
 
 
+def _extract_jsonl(file_bytes: bytes) -> str:
+    """
+    Extract text content from JSONL file.
+    JSONL (JSON Lines) format: one JSON object per line.
+    Each line is treated as a separate record.
+    
+    The function attempts to extract content from common field names:
+    text, content, message, data, body. If none are found, the entire
+    JSON object is serialized as a string.
+    """
+    import json
+
+    try:
+        text_content = file_bytes.decode("utf-8")
+        lines = text_content.strip().split("\n")
+        extracted_texts = []
+
+        for line_num, line in enumerate(lines, 1):
+            line = line.strip()
+            if not line:  # Skip empty lines
+                continue
+
+            try:
+                obj = json.loads(line)
+                # Convert the JSON object to a formatted string
+                # Try common field names for content
+                content_field = None
+                for field in ["text", "content", "message", "data", "body"]:
+                    if field in obj:
+                        content_field = field
+                        break
+
+                if content_field:
+                    # Use the identified content field
+                    extracted_texts.append(str(obj[content_field]))
+                else:
+                    # If no known field found, convert entire object to string
+                    extracted_texts.append(json.dumps(obj, ensure_ascii=False))
+
+            except json.JSONDecodeError as e:
+                logger.warning(
+                    f"[File Extraction]Skipping invalid JSON on line {line_num}: {str(e)}"
+                )
+                continue
+
+        if not extracted_texts:
+            raise ValueError(
+                "No valid JSON lines found in JSONL file or all lines are empty"
+            )
+
+        # Join all extracted texts with newlines
+        return "\n".join(extracted_texts)
+
+    except UnicodeDecodeError as e:
+        raise ValueError(f"JSONL file is not UTF-8 encoded: {str(e)}")
+    except Exception as e:
+        raise ValueError(f"Error processing JSONL file: {str(e)}")
+
+
 def _extract_xlsx(file_bytes: bytes) -> str:
     """Extract XLSX content in tab-delimited format with clear sheet separation.
 
@@ -1975,6 +2035,7 @@ async def pipeline_enqueue_file(
                     | ".css"
                     | ".scss"
                     | ".less"
+                    | ".jsonl"
                 ):
                     try:
                         # Try to decode as UTF-8 (offloaded to thread to avoid blocking the event loop)

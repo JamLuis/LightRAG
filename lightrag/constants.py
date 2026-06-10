@@ -168,6 +168,7 @@ PARSER_ENGINE_SUFFIX_CAPABILITIES = {
             "htm",
             "csv",
             "json",
+            "jsonl",
             "xml",
             "yaml",
             "yml",

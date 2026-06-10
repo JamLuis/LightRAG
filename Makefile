@@ -16,38 +16,9 @@ COLOR_GREEN :=
 COLOR_YELLOW :=
 endif
 
-.PHONY: help dev configure env-base env-storage env-server env-validate env-backup env-security-check env-base-rewrite env-storage-rewrite env base storage server validate backup security security-check base-rewrite storage-rewrite
+.PHONY: help dev configure env-base env-storage env-server env-validate env-backup env-security-check env-base-rewrite env-storage-rewrite env base storage server validate backup security security-check base-rewrite storage-rewrite deploy deploy-fast deploy-dev deploy-webui docker-status docker-logs docker-stop
 
 help:
-	@printf "$(COLOR_BOLD)Interactive setup targets$(COLOR_RESET)\n"
-	@printf "  $(COLOR_GREEN)make dev$(COLOR_RESET)                    Bootstrap local dev+test+offline env with uv + bun\n"
-	@printf "  $(COLOR_GREEN)make env-base$(COLOR_RESET)               Configure LLM, embedding, and reranker (run first)\n"
-	@printf "  $(COLOR_GREEN)make env-storage$(COLOR_RESET)            Configure storage backends and databases\n"
-	@printf "  $(COLOR_GREEN)make env-server$(COLOR_RESET)             Configure server, security, and SSL\n"
-	@printf "  $(COLOR_GREEN)make env-validate$(COLOR_RESET)           Validate existing .env\n"
-	@printf "  $(COLOR_GREEN)make env-security-check$(COLOR_RESET)     Audit existing .env for security risks\n"
-	@printf "  $(COLOR_GREEN)make env-backup$(COLOR_RESET)             Backup current .env\n"
-	@printf "  $(COLOR_GREEN)make env-base-rewrite$(COLOR_RESET)       Force-regenerate wizard-managed compose services during base setup\n"
-	@printf "  $(COLOR_GREEN)make env-storage-rewrite$(COLOR_RESET)    Force-regenerate wizard-managed compose services during storage setup\n"
-	@printf "  $(COLOR_GREEN)make base$(COLOR_RESET)                   Short form of make env-base (all env prefix can be stripped)\n"
-	@printf "\n"
-	@printf "$(COLOR_BOLD)Typical workflow$(COLOR_RESET)\n"
-	@printf "  1. make dev            # install backend/test deps and build frontend\n"
-	@printf "  2. make env-base       # set LLM/embedding/reranker\n"
-	@printf "  3. make env-storage    # set storage backends (optional)\n"
-	@printf "  4. make env-server     # set port/security/SSL (optional)\n\n"
-	@printf "$(COLOR_BOLD)Examples$(COLOR_RESET)\n"
-	@printf "  make dev\n"
-	@printf "  make env-base\n"
-	@printf "  make env-storage SETUP_OPTS=--debug\n"
-	@printf "  make env-server\n\n"
-	@printf "  make env-storage-rewrite\n\n"
-	@printf "  make env-security-check\n\n"
-	@printf "$(COLOR_BOLD)Compose Output$(COLOR_RESET)\n"
-	@printf "  Bundled service images are defined in scripts/setup/templates/*.yml.\n"
-	@printf "  Compose file output: docker-compose.final.yml\n"
-
-dev:
 	@if ! command -v uv >/dev/null 2>&1; then \
 		printf "$(COLOR_YELLOW)uv is required for make dev.$(COLOR_RESET)\n"; \
 		printf "Install uv first: https://docs.astral.sh/uv/getting-started/installation/\n"; \
@@ -97,3 +68,101 @@ env-security-check security security-check:
 
 env-backup backup:
 	@$(SETUP_BASH) $(SETUP_SCRIPT) --backup $(SETUP_OPTS)
+
+##############################################################################
+# Deployment targets
+##############################################################################
+
+deploy:
+	@printf "$(COLOR_BOLD)🚀 LightRAG Full Deployment (Rebuild + Deploy)$(COLOR_RESET)\n"
+	@if [ -f "scripts/deploy.sh" ] && [ -x "scripts/deploy.sh" ]; then \
+		scripts/deploy.sh; \
+	else \
+		printf "$(COLOR_YELLOW)Note: Using PowerShell on Windows. Run: .\\scripts\\deploy.ps1\\n"; \
+	fi
+
+deploy-fast:
+	@printf "$(COLOR_BOLD)⚡ LightRAG Fast Deployment (Reuse Image)$(COLOR_RESET)\n"
+	@if [ -f "scripts/deploy.sh" ] && [ -x "scripts/deploy.sh" ]; then \
+		scripts/deploy.sh --no-rebuild; \
+	else \
+		printf "$(COLOR_YELLOW)Note: Using PowerShell on Windows. Run: .\\scripts\\deploy.ps1 -NoRebuild\\n"; \
+	fi
+
+deploy-dev:
+	@printf "$(COLOR_BOLD)🔧 LightRAG Development Server$(COLOR_RESET)\n"
+	@if [ -f "scripts/deploy.sh" ] && [ -x "scripts/deploy.sh" ]; then \
+		scripts/deploy.sh --dev-server; \
+	else \
+		printf "$(COLOR_YELLOW)Note: Using PowerShell on Windows. Run: .\\scripts\\deploy.ps1 -DevServer\\n"; \
+	fi
+
+deploy-webui:
+	@printf "$(COLOR_BOLD)🎨 LightRAG Deployment with WebUI Build$(COLOR_RESET)\n"
+	@if [ -f "scripts/deploy.sh" ] && [ -x "scripts/deploy.sh" ]; then \
+		scripts/deploy.sh --build-webui; \
+	else \
+		printf "$(COLOR_YELLOW)Note: Using PowerShell on Windows. Run: .\\scripts\\deploy.ps1 -BuildWebUI\\n"; \
+	fi
+
+docker-status:
+	@printf "$(COLOR_BOLD)📊 Docker Container Status$(COLOR_RESET)\n"
+	@docker ps --filter "name=lightrag" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || true
+
+docker-logs:
+	@printf "$(COLOR_BOLD)📋 Docker Container Logs$(COLOR_RESET)\n"
+	@docker compose logs -f lightrag 2>/dev/null || docker logs -f lightrag 2>/dev/null || echo "No running LightRAG container found"
+
+docker-stop:
+	@printf "$(COLOR_BOLD)🛑 Stopping LightRAG Container$(COLOR_RESET)\n"
+	@docker stop $$(docker ps -q --filter "name=lightrag") 2>/dev/null || echo "No running LightRAG container"
+
+##############################################################################
+# Help text updates
+##############################################################################
+
+help:
+	@printf "$(COLOR_BOLD)Interactive setup targets$(COLOR_RESET)\n"
+	@printf "  $(COLOR_GREEN)make dev$(COLOR_RESET)                    Bootstrap local dev+test+offline env with uv + bun\n"
+	@printf "  $(COLOR_GREEN)make env-base$(COLOR_RESET)               Configure LLM, embedding, and reranker (run first)\n"
+	@printf "  $(COLOR_GREEN)make env-storage$(COLOR_RESET)            Configure storage backends and databases\n"
+	@printf "  $(COLOR_GREEN)make env-server$(COLOR_RESET)             Configure server, security, and SSL\n"
+	@printf "  $(COLOR_GREEN)make env-validate$(COLOR_RESET)           Validate existing .env\n"
+	@printf "  $(COLOR_GREEN)make env-security-check$(COLOR_RESET)     Audit existing .env for security risks\n"
+	@printf "  $(COLOR_GREEN)make env-backup$(COLOR_RESET)             Backup current .env\n"
+	@printf "  $(COLOR_GREEN)make env-base-rewrite$(COLOR_RESET)       Force-regenerate wizard-managed compose services during base setup\n"
+	@printf "  $(COLOR_GREEN)make env-storage-rewrite$(COLOR_RESET)    Force-regenerate wizard-managed compose services during storage setup\n"
+	@printf "  $(COLOR_GREEN)make base$(COLOR_RESET)                   Short form of make env-base (all env prefix can be stripped)\n"
+	@printf "\n"
+	@printf "$(COLOR_BOLD)Deployment targets (One-Click)$(COLOR_RESET)\n"
+	@printf "  $(COLOR_GREEN)make deploy$(COLOR_RESET)                 Full deployment (rebuild image + restart container)\n"
+	@printf "  $(COLOR_GREEN)make deploy-fast$(COLOR_RESET)            Fast deployment (reuse image, just restart)\n"
+	@printf "  $(COLOR_GREEN)make deploy-dev$(COLOR_RESET)             Development mode (local Python server)\n"
+	@printf "  $(COLOR_GREEN)make deploy-webui$(COLOR_RESET)           Full deployment with WebUI rebuild\n"
+	@printf "  $(COLOR_GREEN)make docker-status$(COLOR_RESET)          Show Docker container status\n"
+	@printf "  $(COLOR_GREEN)make docker-logs$(COLOR_RESET)            Show Docker container logs (streaming)\n"
+	@printf "  $(COLOR_GREEN)make docker-stop$(COLOR_RESET)            Stop running LightRAG container\n"
+	@printf "\n"
+	@printf "$(COLOR_BOLD)Typical workflow$(COLOR_RESET)\n"
+	@printf "  1. make dev            # install backend/test deps and build frontend\n"
+	@printf "  2. make env-base       # set LLM/embedding/reranker\n"
+	@printf "  3. make env-storage    # set storage backends (optional)\n"
+	@printf "  4. make env-server     # set port/security/SSL (optional)\n"
+	@printf "  5. make deploy         # deploy containers\n\n"
+	@printf "$(COLOR_BOLD)Development workflow$(COLOR_RESET)\n"
+	@printf "  make dev               # setup local environment\n"
+	@printf "  make env-base          # configure LLM\n"
+	@printf "  make deploy-dev        # run local dev server\n\n"
+	@printf "$(COLOR_BOLD)Daily usage$(COLOR_RESET)\n"
+	@printf "  make deploy-fast       # fast restart with existing image\n"
+	@printf "  make docker-logs       # monitor logs\n"
+	@printf "  make docker-stop       # gracefully stop container\n\n"
+	@printf "$(COLOR_BOLD)Examples$(COLOR_RESET)\n"
+	@printf "  make dev\n"
+	@printf "  make env-base\n"
+	@printf "  make deploy\n"
+	@printf "  make deploy-fast\n"
+	@printf "  make docker-logs\n\n"
+	@printf "$(COLOR_BOLD)Compose Output$(COLOR_RESET)\n"
+	@printf "  Bundled service images are defined in scripts/setup/templates/*.yml.\n"
+	@printf "  Compose file output: docker-compose.final.yml\n"
